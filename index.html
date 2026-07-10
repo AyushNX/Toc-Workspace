@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finite Automata Practice - Enhanced Interactive Studio</title>
+  
+  <meta name="theme-color" content="#4a90e2">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="localModeNotice" style="display:none">
+    Local file mode detected. Open via a local server: <code>npx serve . -l 5173</code> then visit <code>http://localhost:5173</code>.
+  </div>
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-orb splash-orb-1"></div>
+    <div class="splash-orb splash-orb-2"></div>
+    <div class="splash-shell">
+      <div class="splash-kicker">TOC-Suite 2026</div>
+      <h1 class="splash-title">Enhanced Automata Studio</h1>
+      <p id="splashStudentWelcome" class="splash-student">Welcome, Student</p>
+      <div class="splash-tabs" role="tablist" aria-label="Studios">
+        <button class="splash-nav-btn" data-target="FA" role="tab">Finite Automata</button>
+        <button class="splash-nav-btn" data-target="MM" role="tab">Mealy/Moore</button>
+        <button class="splash-nav-btn" data-target="PDA" role="tab">PDA</button>
+        <button class="splash-nav-btn" data-target="Turing" role="tab">Turing Machine</button>
+        <button class="splash-nav-btn" data-target="Grammar" role="tab">Grammar Studio</button>
+      </div>
+      <div id="splashUtilityRow">
+        <a href="splash_help.html" class="splash-utility-btn">Help Guide</a>
+        <a href="splash_settings.html" class="splash-utility-btn">Settings</a>
+      </div>
+    </div>
+  </div>
+  <div id="mainApp" style="display:none">
+      <div id="studioContent">
+          </div>
+  </div>
+    
+  <div id="loadingOverlay" class="modal-overlay" style="display:none; z-index: 1000; background: rgba(0, 0, 0, 0.6);">
+      <div class="modal-box" style="text-align: center;">
+          <h3><i data-lucide="bot" style="vertical-align: middle;"></i> Analyzing...</h3>
+          <p class="modal-description">The AI is converting your prompt into a machine. This may take a moment.</p>
+      </div>
+  </div>
+  <div id="transitionModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Add Transition</h3>
+          <p class="modal-description">Enter the symbol for the transition. Use a blank input for an epsilon (ε) transition in an NFA.</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input id="transFrom" class="modal-input" readonly />
+              <input id="transTo" class="modal-input" readonly />
+          </div>
+          <input id="transSymbol" class="modal-input" placeholder="Symbol (blank for ε)" />
+          <div class="modal-actions">
+              <button id="transCancel">Cancel</button>
+              <button id="transSave">Save</button>
+          </div>
+      </div>
+  </div>
+  <div id="statePropsModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>State Properties</h3>
+          <p class="modal-description">Set whether this state is an initial or a final (accepting) state.</p>
+          <div class="modal-prop-row">
+              <label><input type="checkbox" id="propInitial"> Initial State</label>
+          </div>
+          <div class="modal-prop-row">
+              <label><input type="checkbox" id="propFinal"> Final State</label>
+          </div>
+          <div class="modal-actions">
+              <button id="propCancel">Cancel</button>
+              <button id="propSave">Save</button>
+          </div>
+      </div>
+  </div>
+  <div id="renameModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Rename State</h3>
+          <p class="modal-description">Enter the new name for the state. It must be unique.</p>
+          <input id="renameInput" class="modal-input" placeholder="New state name" />
+          <div class="modal-actions">
+              <button id="renameCancel">Cancel</button>
+              <button id="renameSave">Save</button>
+          </div>
+      </div>
+  </div>
+  <div id="confirmClearModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Clear Canvas</h3>
+          <p class="modal-description">Are you sure you want to clear the entire canvas? This action can be undone.</p>
+          <div class="modal-actions">
+              <button id="confirmClearCancel">Cancel</button>
+              <button id="confirmClearConfirm" class="danger-btn">Clear Canvas</button>
+          </div>
+      </div>
+  </div>
+  <div id="alertModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3 id="alertModalTitle">Alert</h3>
+          <p id="alertModalMessage" class="modal-description"></p>
+          <div class="modal-actions">
+              <button id="alertOk">OK</button>
+          </div>
+      </div>
+  </div>
+  
+    <div id="aiAuthModal" class="modal-overlay" style="display:none; z-index: 900;">
+      <div class="modal-box" style="text-align: center;">
+          <h3><i data-lucide="lock" style="vertical-align: middle;"></i> AI Generator Access</h3>
+          <p class="modal-description">Please enter the one-time password to unlock AI generation features for this session.</p>
+          <input id="aiPasswordInput" class="modal-input" type="password" placeholder="One-Time Password" />
+          <div class="modal-actions">
+              <button id="aiAuthCancel">Cancel</button>
+              <button id="aiAuthConfirm">Unlock</button>
+          </div>
+      </div>
+  </div>
+
+  <div id="mealyTransitionModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Add Mealy Transition</h3>
+          <p class="modal-description">Enter the input symbol and the corresponding output symbol. (e.g., Input: 0, Output: a)</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input id="mealyTransFrom" class="modal-input" readonly />
+              <input id="mealyTransTo" class="modal-input" readonly />
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+              <input id="mealyTransSymbol" class="modal-input" placeholder="Input Symbol (e.g., 0)" style="flex:1" />
+              <input id="mealyTransOutput" class="modal-input" placeholder="Output Symbol (e.g., a)" style="flex:1" />
+          </div>
+          <div class="modal-actions">
+              <button id="mealyTransCancel">Cancel</button>
+              <button id="mealyTransSave">Save</button>
+          </div>
+      </div>
+  </div>
+  <div id="mooreStatePropsModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Moore State Properties</h3>
+          <p class="modal-description">Set whether this is the initial state and define the output produced when entering this state.</p>
+          <div class="modal-prop-row">
+              <label><input type="checkbox" id="moorePropInitial"> Initial State</label>
+          </div>
+          <div class="modal-prop-row">
+              <label for="moorePropOutput">Output Symbol $\lambda(q)$:</label>
+              <input id="moorePropOutput" class="modal-input" placeholder="Output (e.g., 0 or a)" />
+          </div>
+          <div class="modal-actions">
+              <button id="moorePropCancel">Cancel</button>
+              <button id="moorePropSave">Save</button>
+          </div>
+      </div>
+  </div>
+  
+  <div id="saveLibraryModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Save to Library File</h3>
+          <p class="modal-description">Review the auto-generated details for your automaton. This will generate a JSON file ready for your library.</p>
+          <input id="libTitleInput" class="modal-input" placeholder="Title (e.g., DFA for even number of 0s)" />
+          <textarea id="libDescInput" class="modal-input" placeholder="Custom notes about the machine..." style="height: 60px; resize: vertical;"></textarea>
+          <div id="libAlphabetDisplay" style="background: #f1f5f9; padding: 8px 10px; border-radius: 8px; font-size: 0.9em; color: #475569; margin-top: 8px; display: none;"></div>
+          <select id="libTypeInput" class="modal-input" style="margin-top: 12px;">
+                <option value="DFA">DFA</option>
+                <option value="NFA">NFA</option>
+                <option value="ENFA">ε-NFA</option>
+                <option value="MOORE">Moore Machine</option>
+                <option value="MEALY">Mealy Machine</option>
+          </select>
+          <div class="modal-actions">
+              <button id="libSaveCancel">Cancel</button>
+              <button id="libSaveConfirm">Save JSON</button>
+          </div>
+      </div>
+  </div>
+  <div id="exportPngModal" class="modal-overlay" style="display:none">
+      <div class="modal-box">
+          <h3>Export as PNG</h3>
+          <p class="modal-description">Enter a name for the PNG file.</p>
+          <input id="pngNameInput" class="modal-input" placeholder="e.g., dfa-ends-with-0" />
+          <div class="modal-actions">
+              <button id="pngExportCancel">Cancel</button>
+              <button id="pngExportConfirm">Export</button>
+          </div>
+      </div>
+  </div>
+  <div id="splashHelpModal" class="modal-overlay" style="display:none">
+      <div class="modal-box splash-dialog">
+          <h3>Interactive Help</h3>
+          <p class="modal-description" id="helpStepTitle">Step 1</p>
+          <div id="helpStepContent" class="help-step-content"></div>
+          <div class="help-step-progress">
+              <span id="helpStepCounter">1/4</span>
+          </div>
+          <div class="modal-actions">
+              <button id="helpPrevBtn" type="button">Previous</button>
+              <button id="helpNextBtn" type="button">Next</button>
+              <button id="helpCloseBtn" type="button">Close</button>
+          </div>
+      </div>
+  </div>
+  <div id="splashSettingsModal" class="modal-overlay" style="display:none">
+      <div class="modal-box splash-dialog">
+          <h3>Settings</h3>
+          <p class="modal-description">Set your profile and app theme for all studios.</p>
+          <input id="studentNameInput" class="modal-input" placeholder="Student name" maxlength="40" />
+          <label for="themeSelect" style="font-size:0.9rem;font-weight:600;">Theme</label>
+          <select id="themeSelect" class="modal-input">
+              <option value="default">Default</option>
+              <option value="ocean">Ocean</option>
+              <option value="forest">Forest</option>
+              <option value="sunset">Sunset</option>
+          </select>
+          <div class="integration-status">
+              <div><strong>Neon DB:</strong> Connected in code via `DATABASE_URL` on Netlify functions.</div>
+              <div><strong>GitHub:</strong> Push workflow configured via `GITHUB_PAT` in Netlify functions.</div>
+          </div>
+          <div class="modal-actions">
+              <button id="settingsCancelBtn" type="button">Cancel</button>
+              <button id="settingsSaveBtn" type="button">Save Settings</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    const isFileProtocol = window.location.protocol === 'file:';
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const isSecure = window.location.protocol === 'https:';
+    const safeGet = (key, fallback = '') => {
+      try { return localStorage.getItem(key) ?? fallback; } catch (_e) { return fallback; }
+    };
+    const safeSet = (key, value) => {
+      try { localStorage.setItem(key, value); } catch (_e) {}
+    };
+    const bindUniversalSplashUtilityFallback = () => {
+      const helpModal = document.getElementById('splashHelpModal');
+      const settingsModal = document.getElementById('splashSettingsModal');
+      const openHelpBtn = document.getElementById('openHelpBtn');
+      const openSettingsBtn = document.getElementById('openSettingsBtn');
+      const helpTitle = document.getElementById('helpStepTitle');
+      const helpContent = document.getElementById('helpStepContent');
+      const helpCounter = document.getElementById('helpStepCounter');
+      const helpPrevBtn = document.getElementById('helpPrevBtn');
+      const helpNextBtn = document.getElementById('helpNextBtn');
+      const helpCloseBtn = document.getElementById('helpCloseBtn');
+      const studentNameInput = document.getElementById('studentNameInput');
+      const themeSelect = document.getElementById('themeSelect');
+      const settingsCancelBtn = document.getElementById('settingsCancelBtn');
+      const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+      const welcome = document.getElementById('splashStudentWelcome');
+
+      const helpSteps = [
+        { title: 'Step 1: Pick a Studio', content: 'Use FA, Mealy/Moore, PDA, or Turing based on your class topic.' },
+        { title: 'Step 2: Build on Canvas', content: 'Use toolbar tools to add/move/delete states and transitions.' },
+        { title: 'Step 3: Test + Practice', content: 'Run tests, bulk checks, and practice questions before submission.' },
+        { title: 'Step 4: Save + Export', content: 'Use Save JSON and Export PNG for submission and revision.' },
+        { title: 'Step 5: Shortcuts', content: 'Ctrl/Cmd+S save, Ctrl/Cmd+O load, Ctrl/Cmd+E export, V/S/T/D tools.' }
+      ];
+      let helpIndex = 0;
+      const renderStep = () => {
+        const step = helpSteps[helpIndex];
+        if (helpTitle) helpTitle.textContent = step.title;
+        if (helpContent) helpContent.textContent = step.content;
+        if (helpCounter) helpCounter.textContent = `${helpIndex + 1}/${helpSteps.length}`;
+        if (helpPrevBtn) helpPrevBtn.disabled = helpIndex === 0;
+        if (helpNextBtn) helpNextBtn.textContent = helpIndex === helpSteps.length - 1 ? 'Finish' : 'Next';
+      };
+      const closeModal = (m) => { if (m) m.style.display = 'none'; };
+      const openModal = (m) => { if (m) m.style.display = 'flex'; };
+
+      if (welcome) welcome.textContent = `Welcome, ${safeGet('tocStudentName', 'Student')}`;
+
+      if (openHelpBtn) {
+        openHelpBtn.onclick = () => {
+          helpIndex = 0;
+          renderStep();
+          openModal(helpModal);
+        };
+      }
+      if (helpPrevBtn) helpPrevBtn.onclick = () => { helpIndex = Math.max(0, helpIndex - 1); renderStep(); };
+      if (helpNextBtn) helpNextBtn.onclick = () => {
+        if (helpIndex >= helpSteps.length - 1) return closeModal(helpModal);
+        helpIndex += 1; renderStep();
+      };
+      if (helpCloseBtn) helpCloseBtn.onclick = () => closeModal(helpModal);
+
+      if (openSettingsBtn) {
+        openSettingsBtn.onclick = () => {
+          if (studentNameInput) studentNameInput.value = safeGet('tocStudentName', 'Student');
+          if (themeSelect) themeSelect.value = safeGet('tocTheme', 'default');
+          openModal(settingsModal);
+        };
+      }
+      if (settingsCancelBtn) settingsCancelBtn.onclick = () => closeModal(settingsModal);
+      if (settingsSaveBtn) {
+        settingsSaveBtn.onclick = () => {
+          const studentName = (studentNameInput?.value || '').trim() || 'Student';
+          const theme = themeSelect?.value || 'default';
+          safeSet('tocStudentName', studentName);
+          safeSet('tocTheme', theme);
+          if (welcome) welcome.textContent = `Welcome, ${studentName}`;
+          closeModal(settingsModal);
+        };
+      }
+      [helpModal, settingsModal].forEach((m) => {
+        m?.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+      });
+    };
+    const showLocalModeHint = () => {
+      const cmd = 'npx serve . -l 5173';
+      alert(`Local file mode cannot run module-based app features.\n\nRun in terminal:\n${cmd}\nThen open:\nhttp://localhost:5173`);
+    };
+    const bindFileModeFallbacks = () => {
+      const helpModal = document.getElementById('splashHelpModal');
+      const settingsModal = document.getElementById('splashSettingsModal');
+      const openHelpBtn = document.getElementById('openHelpBtn');
+      const openSettingsBtn = document.getElementById('openSettingsBtn');
+      const helpCloseBtn = document.getElementById('helpCloseBtn');
+      const settingsCancelBtn = document.getElementById('settingsCancelBtn');
+      const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+
+      openHelpBtn?.addEventListener('click', () => {
+        if (helpModal) helpModal.style.display = 'flex';
+      });
+      openSettingsBtn?.addEventListener('click', () => {
+        if (settingsModal) settingsModal.style.display = 'flex';
+      });
+      helpCloseBtn?.addEventListener('click', () => {
+        if (helpModal) helpModal.style.display = 'none';
+      });
+      settingsCancelBtn?.addEventListener('click', () => {
+        if (settingsModal) settingsModal.style.display = 'none';
+      });
+      settingsSaveBtn?.addEventListener('click', () => {
+        if (settingsModal) settingsModal.style.display = 'none';
+        showLocalModeHint();
+      });
+      [helpModal, settingsModal].forEach((modal) => {
+        modal?.addEventListener('click', (e) => {
+          if (e.target === modal) modal.style.display = 'none';
+        });
+      });
+      document.querySelectorAll('.splash-nav-btn').forEach((btn) => {
+        btn.addEventListener('click', showLocalModeHint);
+      });
+    };
+
+    if (isFileProtocol) {
+      const localNotice = document.getElementById('localModeNotice');
+      if (localNotice) localNotice.style.display = 'block';
+      bindUniversalSplashUtilityFallback();
+      bindFileModeFallbacks();
+    } else {
+      bindUniversalSplashUtilityFallback();
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = 'manifest.json';
+      document.head.appendChild(manifestLink);
+
+      const aiScript = document.createElement('script');
+      aiScript.type = 'module';
+      aiScript.src = 'ai-auth.js';
+      aiScript.onerror = () => console.error('Failed to load ai-auth.js');
+      document.body.appendChild(aiScript);
+
+      const appScript = document.createElement('script');
+      appScript.type = 'module';
+      appScript.src = 'unified_main.js';
+      appScript.onerror = () => console.error('Failed to load unified_main.js');
+      document.body.appendChild(appScript);
+    }
+
+    if ('serviceWorker' in navigator && !isFileProtocol && (isSecure || isLocalhost)) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => console.log('Service Worker Registered'))
+          .catch((err) => console.log('Service Worker Failed', err));
+      });
+    }
+  </script>
+</body>
+
+</html>
